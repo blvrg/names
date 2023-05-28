@@ -19,7 +19,6 @@
 <body>
     <h1>btc names (aka xns)</h1>
     <table id="result"></table>
-
     <script>
         const API_URL = 'https://xchain.io/api/issuances/';
         const DISPENSER_API_URL = 'https://xchain.io/api/dispensers/';
@@ -27,7 +26,6 @@
         const DISPENSER_URL = 'http://xchain.io/tx';
         const MAX_RESULTS = 1;
         let currentResults = 0;
-
         async function fetchIssuancesForBlock(blockNumber) {
             try {
                 let response = await fetch(API_URL + blockNumber);
@@ -44,10 +42,8 @@
                 let response = await fetch(DISPENSER_API_URL + assetName);
                 let data = await response.json();
                 if(data.data.length > 0) {
-                    // Return the first dispenser found
                     return data.data[0];
                 } else {
-                    // Return null if no dispensers found
                     return null;
                 }
             } catch(error) {
@@ -59,19 +55,14 @@
         async function processBlock(blockNumber) {
             let issuances = await fetchIssuancesForBlock(blockNumber);
             for(let issuance of issuances.data) {
-                if (issuance.description.startsWith('name:')) {
-                    // Increment result counter
+                if (issuance.description.startsWith('name:') && currentResults < MAX_RESULTS) {
                     currentResults++;
-                    // Extract the name
-                    let name = issuance.description.substring(5).trim();  // Remove 'name:' from the description
+                    let name = issuance.description.substring(5).trim();
                     if (name.startsWith('U+')) {
-                        // If it's a unicode, convert to actual character
                         let unicode = name.split('U+')[1];
                         name = String.fromCodePoint('0x' + unicode);
                     }
-                    // Check dispenser for the asset
                     let dispenserData = await checkDispenser(issuance.asset);
-                    // Add to table
                     let row = document.createElement('tr');
                     let numCell = document.createElement('td');
                     numCell.textContent = currentResults;
@@ -83,11 +74,10 @@
                     link.textContent = issuance.asset;
                     assetCell.appendChild(link);
                     let dispenserCell = document.createElement('td');
-                    // If dispenser exists, add link to it
                     if (dispenserData !== null) {
                         let link = document.createElement('a');
-                        link.href = `https://xchain.io/tx/${dispenserData.tx_hash}`;  // Create link to dispenser
-                        link.textContent = `${dispenserData.give_remaining} @ ${dispenserData.satoshi_price}`;  // Display remaining and price
+                        link.href = `https://xchain.io/tx/${dispenserData.tx_hash}`;
+                        link.textContent = `${dispenserData.give_remaining} @ ${dispenserData.satoshi_price}`;
                         dispenserCell.appendChild(link);
                     } else {
                         dispenserCell.textContent = 'No Dispenser';
@@ -109,25 +99,26 @@
             let blockText = await block.text();
             endBlock = parseInt(blockText);
 
-            document.getElementById('result').innerHTML = `<tr><th>Number</th><th>Name</th><th>Asset Name</th><th>Dispenser</th></tr>`; // Clear the results
-            currentResults = 0; // Reset results count
+            document.getElementById('result').innerHTML = `<tr><th>Number</th><th>Name</th><th>Asset Name</th><th>Dispenser</th></tr>`;
+            currentResults = 0;
 
             let blockNumbers = [];
-            for(let i = endBlock; i >= startBlock && blockNumbers.length < MAX_RESULTS; i--) {
+            for(let i = endBlock; i >= startBlock; i--) {
                 blockNumbers.push(i);
             }
 
-            blockNumbers.sort((a, b) => a - b);  // This will sort the array in ascending order
+            blockNumbers.sort((a, b) => a - b);
 
-            for(let i = startBlock; i <= endBlock; i++) {
-                blockNumbers.push(i);
+            for(let blockNumber of blockNumbers) {
+                await processBlock(blockNumber);
             }
-
         }
 
         window.onload = function() {
-            getIndexer(); // Fetch data when the page loads
+            getIndexer();
         };
+
+
   </script>
 </body>
 </html>
