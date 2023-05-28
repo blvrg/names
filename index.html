@@ -56,65 +56,72 @@
             }
         }
 
-        function getIndexer() {
+        async function processBlock(blockNumber) {
+            let issuances = await fetchIssuancesForBlock(blockNumber);
+            for(let issuance of issuances.data) {
+                if (issuance.description.startsWith('name:')) {
+                    // Increment result counter
+                    currentResults++;
+                    // Extract the name
+                    let name = issuance.description.substring(5).trim();  // Remove 'name:' from the description
+                    if (name.startsWith('U+')) {
+                        // If it's a unicode, convert to actual character
+                        let unicode = name.split('U+')[1];
+                        name = String.fromCodePoint('0x' + unicode);
+                    }
+                    // Check dispenser for the asset
+                    let dispenserData = await checkDispenser(issuance.asset);
+                    // Add to table
+                    let row = document.createElement('tr');
+                    let numCell = document.createElement('td');
+                    numCell.textContent = currentResults;
+                    let nameCell = document.createElement('td');
+                    nameCell.textContent = name;
+                    let assetCell = document.createElement('td');
+                    let link = document.createElement('a');
+                    link.href = ASSET_URL + issuance.asset;
+                    link.textContent = issuance.asset;
+                    assetCell.appendChild(link);
+                    let dispenserCell = document.createElement('td');
+                    // If dispenser exists, add link to it
+                    if (dispenserData !== null) {
+                        let link = document.createElement('a');
+                        link.href = `https://xchain.io/tx/${dispenserData.tx_hash}`;  // Create link to dispenser
+                        link.textContent = `${dispenserData.give_remaining} @ ${dispenserData.satoshi_price}`;  // Display remaining and price
+                        dispenserCell.appendChild(link);
+                    } else {
+                        dispenserCell.textContent = 'No Dispenser';
+                    }
+                    row.appendChild(numCell);
+                    row.appendChild(nameCell);
+                    row.appendChild(assetCell);
+                    row.appendChild(dispenserCell);
+                    document.getElementById('result').appendChild(row);
+                }
+            }
+        }
+
+        async function getIndexer() {
             let startBlock = 791681;
             let endBlock;
 
-            fetch('https://blockchain.info/q/getblockcount')
-                .then(response => response.text())
-                .then(block => {
-                    endBlock = parseInt(block);
+            let block = await fetch('https://blockchain.info/q/getblockcount');
+            let blockText = await block.text();
+            endBlock = parseInt(blockText);
 
-                    document.getElementById('result').innerHTML = `<tr><th>Number</th><th>Name</th><th>Asset Name</th><th>Dispenser</th></tr>`; // Clear the results
-                    currentResults = 0; // Reset results count
+            document.getElementById('result').innerHTML = `<tr><th>Number</th><th>Name</th><th>Asset Name</th><th>Dispenser</th></tr>`; // Clear the results
+            currentResults = 0; // Reset results count
 
-                        for(let i = endBlock; i >= startBlock && currentResults < MAX_RESULTS; i--) {
-                            fetchIssuancesForBlock(i).then(issuances => {
-                                issuances.data.forEach(issuance => {
-                                  if (issuance.description.startsWith('name:')) {
-                                  // Increment result counter
-                                  currentResults++;
-                                  // Extract the name
-                                  let name = issuance.description.substring(5).trim();  // Remove 'name:' from the description
-                                  if (name.startsWith('U+')) {
-                                      // If it's a unicode, convert to actual character
-                                      let unicode = name.split('U+')[1];
-                                      name = String.fromCodePoint('0x' + unicode);
-                                  }                            // Check dispenser for the asset
-                                    checkDispenser(issuance.asset).then(dispenserData => {
-                                        // Add to table
-                                        let row = document.createElement('tr');
-                                        let numCell = document.createElement('td');
-                                        numCell.textContent = currentResults;
-                                        let nameCell = document.createElement('td');
-                                        nameCell.textContent = name;
-                                        let assetCell = document.createElement('td');
-                                        let link = document.createElement('a');
-                                        link.href = ASSET_URL + issuance.asset;
-                                        link.textContent = issuance.asset;
-                                        assetCell.appendChild(link);
-                                        let dispenserCell = document.createElement('td');
-                                        // If dispenser exists, add link to it
-                                        if (dispenserData !== null) {
-                                            let link = document.createElement('a');
-                                            link.href = `https://xchain.io/tx/${dispenserData.tx_hash}`;  // Create link to dispenser
-                                            link.textContent = `${dispenserData.satoshi_price}`;  // Display remaining and price
-                                            dispenserCell.appendChild(link);
-                                        } else {
-                                            dispenserCell.textContent = 'No Dispenser';
-                                        }
-                                        row.appendChild(numCell);
-                                        row.appendChild(nameCell);
-                                        row.appendChild(assetCell);
-                                        row.appendChild(dispenserCell);
-                                        document.getElementById('result').appendChild(row);
-                                    });
-                                }
-                            });
-                        });
-                    }
-                })
-                .catch(err => console.error('Error:', err));
+            let blockNumbers = [];
+            for(let i = endBlock; i >= startBlock && blockNumbers.length < MAX_RESULTS; i--) {
+                blockNumbers.push(i);
+            }
+
+            blockNumbers.sort((a, b) => a - b);  // This will sort the array in ascending order
+
+            for(let blockNumber of blockNumbers) {
+                await processBlock(blockNumber);
+            }
         }
 
         window.onload = function() {
