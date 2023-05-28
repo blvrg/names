@@ -28,32 +28,34 @@
         const MAX_RESULTS = 1;
         let currentResults = 0;
 
-        function fetchIssuancesForBlock(blockNumber) {
-            return fetch(API_URL + blockNumber)
-                .then(response => response.json())
-                .catch(error => {
-                    console.error('Error:', error);
-                    return 'Error occurred. See console for details.';
-                });
+        async function fetchIssuancesForBlock(blockNumber) {
+            try {
+                let response = await fetch(API_URL + blockNumber);
+                let data = await response.json();
+                return data;
+            } catch(error) {
+                console.error('Error:', error);
+                return 'Error occurred. See console for details.';
+            }
         }
 
-        function checkDispenser(assetName) {
-            return fetch(DISPENSER_API_URL + assetName)
-                .then(response => response.json())
-                .then(data => {
-                    if(data.data.length > 0) {
-                        // Return the first dispenser found
-                        return data.data[0];
-                    } else {
-                        // Return null if no dispensers found
-                        return null;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    return 'Error occurred. See console for details.';
-                });
+        async function checkDispenser(assetName) {
+            try {
+                let response = await fetch(DISPENSER_API_URL + assetName);
+                let data = await response.json();
+                if(data.data.length > 0) {
+                    // Return the first dispenser found
+                    return data.data[0];
+                } else {
+                    // Return null if no dispensers found
+                    return null;
+                }
+            } catch(error) {
+                console.error('Error:', error);
+                return 'Error occurred. See console for details.';
+            }
         }
+
         function getIndexer() {
             let startBlock = 791681;
             let endBlock;
@@ -66,10 +68,10 @@
                     document.getElementById('result').innerHTML = `<tr><th>Number</th><th>Name</th><th>Asset Name</th><th>Dispenser</th></tr>`; // Clear the results
                     currentResults = 0; // Reset results count
 
-                    for(let i = endBlock; i >= startBlock && currentResults < MAX_RESULTS; i--) {
-                        fetchIssuancesForBlock(i).then(issuances => {
-                            issuances.data.forEach(issuance => {
-                              if (issuance.description.startsWith('name:')) {
+                        for(let i = endBlock; i >= startBlock && currentResults < MAX_RESULTS; i--) {
+                            fetchIssuancesForBlock(i).then(issuances => {
+                                issuances.data.forEach(issuance => {
+                                  if (issuance.description.startsWith('name:')) {
                                   // Increment result counter
                                   currentResults++;
                                   // Extract the name
