@@ -20,7 +20,7 @@
 <body>
     <h1>btc names (aka xns)</h1>
     <table id="result"></table>
-    <div id="status"></div>
+    <p id="status"></p>
     <script>
         const API_URL = 'https://xchain.io/api/issuances/';
         const DISPENSER_API_URL = 'https://xchain.io/api/dispensers/';
@@ -116,8 +116,10 @@
                 statusDiv.textContent = `Checking block ${blockNumber} out of ${endBlock}`;
                 await processBlock(blockNumber);
             }
+
+            statusDiv.textContent = '';
         }
-        statusDiv.textContent = '';
+
         window.onload = function() {
             getIndexer();
         };
