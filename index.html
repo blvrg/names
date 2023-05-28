@@ -116,8 +116,6 @@
                 statusDiv.textContent = `Checking block ${blockNumber} out of ${endBlock}`;
                 await processBlock(blockNumber);
             }
-
-            statusDiv.textContent = "Finished processing all blocks!";
         }
 
         window.onload = function() {
