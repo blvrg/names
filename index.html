@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>btc names (aka xns)</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👀</text></svg>">    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
         * {font-family: 'VT323', monospace; text-align:center}
@@ -24,9 +25,9 @@
         const DISPENSER_API_URL = 'https://xchain.io/api/dispensers/';
         const ASSET_URL = 'http://xchain.io/asset/';
         const DISPENSER_URL = 'http://xchain.io/tx';
-        const MAX_RESULTS = 1;
+        const MAX_RESULTS = 3;
         let currentResults = 0;
-        async function fetchIssuancesForBlock(blockNumber) {
+         async function fetchIssuancesForBlock(blockNumber) {
             try {
                 let response = await fetch(API_URL + blockNumber);
                 let data = await response.json();
@@ -109,16 +110,18 @@
 
             blockNumbers.sort((a, b) => a - b);
 
+            let statusDiv = document.getElementById('status');
             for(let blockNumber of blockNumbers) {
+                statusDiv.textContent = `Checking block ${blockNumber} out of ${endBlock}`;
                 await processBlock(blockNumber);
             }
+
+            statusDiv.textContent = "Finished processing all blocks!";
         }
 
         window.onload = function() {
             getIndexer();
         };
-
-
-  </script>
+ </script>
 </body>
 </html>
