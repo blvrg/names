@@ -119,9 +119,10 @@
 
             blockNumbers.sort((a, b) => a - b);  // This will sort the array in ascending order
 
-            for(let blockNumber of blockNumbers) {
-                await processBlock(blockNumber);
+            for(let i = startBlock; i <= endBlock; i++) {
+                blockNumbers.push(i);
             }
+
         }
 
         window.onload = function() {
