@@ -2,5 +2,5 @@
 
 `name:example`
 
-- alphanumberic
+- alphanumeric
 - unicode u+xxxx
